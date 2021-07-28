@@ -4,6 +4,7 @@ import os
 from functools import lru_cache
 from os.path import expanduser
 
+<<<<<<< HEAD
 import grpc
 
 from grpc_generated import router_pb2 as lnrouter
@@ -12,53 +13,61 @@ from grpc_generated import lightning_pb2 as ln
 from grpc_generated import lightning_pb2_grpc as lnrpc
 from grpc_generated import invoices_pb2 as invoices
 from grpc_generated import invoices_pb2_grpc as invoicesrpc
+=======
+from lndgrpc import LNDClient
+>>>>>>> initial changes
 
 MESSAGE_SIZE_MB = 50 * 1024 * 1024
 
 
 class Lnd:
-    def __init__(self, lnd_dir, server, network):
-        os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
-        if lnd_dir == "_DEFAULT_":
-            lnd_dir = "~/.lnd"
-            lnd_dir2 = "~/umbrel/lnd"
-            lnd_dir3 = "~/umbrel/app-data/lightning/data/lnd"
-            lnd_dir = expanduser(lnd_dir)
-            lnd_dir2 = expanduser(lnd_dir2)
-            lnd_dir3 = expanduser(lnd_dir3)
-            if not os.path.isdir(lnd_dir) and os.path.isdir(lnd_dir2):
-                lnd_dir = lnd_dir2
-            if not os.path.isdir(lnd_dir) and os.path.isdir(lnd_dir3):
-                lnd_dir = lnd_dir3
-        else:
-            lnd_dir = expanduser(lnd_dir)
-        
-        combined_credentials = self.get_credentials(lnd_dir, network)
-        channel_options = [
-            ("grpc.max_message_length", MESSAGE_SIZE_MB),
-            ("grpc.max_receive_message_length", MESSAGE_SIZE_MB),
-        ]
-        grpc_channel = grpc.secure_channel(
-            server, combined_credentials, channel_options
-        )
+    def __init__(self, lnd_dir, server):
+        # os.environ["GRPC_SSL_CIPHER_SUITES"] = "HIGH+ECDSA"
+        # lnd_dir = expanduser(lnd_dir)
+        # combined_credentials = self.get_credentials(lnd_dir)
+        # channel_options = [
+        #     ("grpc.max_message_length", MESSAGE_SIZE_MB),
+        #     ("grpc.max_receive_message_length", MESSAGE_SIZE_MB),
+        # ]
+        # grpc_channel = grpc.secure_channel(
+        #     server, combined_credentials, channel_options
+        # )
         self.stub = lnrpc.LightningStub(grpc_channel)
         self.router_stub = lnrouterrpc.RouterStub(grpc_channel)
         self.invoices_stub = invoicesrpc.InvoicesStub(grpc_channel)
 
-    @staticmethod
-    def get_credentials(lnd_dir, network):
-        with open(f"{lnd_dir}/tls.cert", "rb") as f:
-            tls_certificate = f.read()
-        ssl_credentials = grpc.ssl_channel_credentials(tls_certificate)
-        with open(f"{lnd_dir}/data/chain/bitcoin/{network}/admin.macaroon", "rb") as f:
-            macaroon = codecs.encode(f.read(), "hex")
-        auth_credentials = grpc.metadata_call_credentials(
-            lambda _, callback: callback([("macaroon", macaroon)], None)
+        credential_path = os.getenv("LND_CRED_PATH", None)
+        if credential_path == None:
+            credential_path = Path("/home/skorn/.lnd/")
+            mac = str(credential_path.joinpath("data/chain/bitcoin/mainnet/admin.macaroon").absolute())
+        else:
+            credential_path = Path(credential_path)
+            mac = str(credential_path.joinpath("admin.macaroon").absolute())
+            
+
+        node_ip = "192.168.1.58"
+        tls = str(credential_path.joinpath("tls.cert").absolute())
+
+        self.lnd = LNDClient(
+            f"{node_ip}:10009",
+            macaroon_filepath=mac,
+            cert_filepath=tls
         )
-        combined_credentials = grpc.composite_channel_credentials(
-            ssl_credentials, auth_credentials
-        )
-        return combined_credentials
+
+    # @staticmethod
+    # def get_credentials(lnd_dir):
+    #     with open(f"{lnd_dir}/tls.cert", "rb") as f:
+    #         tls_certificate = f.read()
+    #     ssl_credentials = grpc.ssl_channel_credentials(tls_certificate)
+    #     with open(f"{lnd_dir}/data/chain/bitcoin/mainnet/admin.macaroon", "rb") as f:
+    #         macaroon = codecs.encode(f.read(), "hex")
+    #     auth_credentials = grpc.metadata_call_credentials(
+    #         lambda _, callback: callback([("macaroon", macaroon)], None)
+    #     )
+    #     combined_credentials = grpc.composite_channel_credentials(
+    #         ssl_credentials, auth_credentials
+    #     )
+    #     return combined_credentials
 
     @lru_cache(maxsize=None)
     def get_info(self):
