@@ -137,7 +137,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.1"
-content-hash = "c598d61088d4689911c0272cc67bedbea48530ff477832f6ce50b8d293a90e82"
+content-hash = "b97c1638d7de344ce3c4bea9178d4489e0d77ab3d4aa214d9d32ce5995d1fe48"
 
 [metadata.files]
 aiogrpc = [

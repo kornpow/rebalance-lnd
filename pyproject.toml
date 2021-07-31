@@ -1,14 +1,13 @@
 [tool.poetry]
 name = "rebalance_lnd"
-version = "0.1.11"
+version = "2.2"
 description = "A tool which pairs Pandas to LND Lightning Network Data for Data Science"
 readme = "README.md"
-authors = ["Sam Korn <korn94sam@gmail.com>", "C-Otto"]
+authors = ["C-Otto"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.7.1"
-six = "1.16.0"
 yachalk = "0.1.2"
 lnd-grpc-client = "0.3.10"
 
