@@ -1,9 +1,9 @@
 import math
 
-import output
-from output import Output, format_alias, format_fee_msat, format_ppm, format_amount, \
-    format_warning, format_error, format_earning, format_fee_msat_red, format_fee_msat_white, format_channel_id
-from routes import Routes
+# import output
+from .output import Output, format_alias, format_fee_msat, format_ppm, format_amount, format_boring_string, \
+    format_fee_sat, format_warning, format_error, format_earning, format_fee_msat_red
+from .routes import Routes
 
 DEFAULT_BASE_FEE_SAT_MSAT = 1_000
 DEFAULT_FEE_RATE_MSAT = 0.001

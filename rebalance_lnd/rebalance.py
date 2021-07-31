@@ -8,10 +8,10 @@ import sys
 
 from yachalk import chalk
 
-from lnd import Lnd
-from logic import Logic
-from output import Output, format_alias, format_ppm, format_amount, format_amount_green, format_boring_string, \
-    print_bar, format_channel_id, format_error
+# import output
+from .lnd import Lnd
+from .logic import Logic
+from .output import Output, format_alias, format_ppm, format_amount, format_amount_green, format_boring_string, print_bar
 
 MAX_SATOSHIS_PER_TRANSACTION = 4294967
 
