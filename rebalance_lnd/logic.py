@@ -93,7 +93,10 @@ class Logic:
         return False
 
     def get_fee_limit_msat(self):
-        fee_limit_msat = None
+        """
+        Returns:
+            int: Max msats to spend in fees
+        """
         if self.fee_limit_sat:
             fee_limit_msat = self.fee_limit_sat * 1_000
         elif self.fee_ppm_limit:
@@ -264,6 +267,13 @@ class Logic:
         return self.fees_too_high(route, routes)
 
     def low_outbound_liquidity_after_sending(self, first_hop, total_amount):
+        """
+        Args:
+            first_hop (obj): Hop grpc object
+            total_amount (int): Amount of satoshis to send
+        Returns:
+            bool: Whether channel local_Balance would be too low if rebalance succeeds
+        """
         if self.first_hop_channel:
             # Just use the computed/specified amount to drain the first hop, ignoring fees
             return False
@@ -276,6 +286,12 @@ class Logic:
         return max(0, channel.local_balance - channel.local_chan_reserve_sat) - total_amount < self.min_local
 
     def low_inbound_liquidity_after_receiving(self, last_hop):
+        """
+        Args:
+            last_hop (obj): Hop grpc object
+        Returns:
+            bool: Whether channel remote_balance would be too low if rebalance succeeds
+        """
         if self.last_hop_channel:
             return False
         channel_id = last_hop.chan_id
@@ -292,6 +308,13 @@ class Logic:
         return first_hop.chan_id == last_hop.chan_id
 
     def fees_too_high(self, route, routes):
+        """
+        Args:
+            route (obj): Route grpc object
+            routes (obj): Internal routes object
+        Returns:
+            bool: whether or not fees are too high to attempt a route
+        """
         policy_first_hop = self.lnd.get_policy_to(route.hops[0].chan_id)
         amount_msat = route.total_amt_msat
         missed_fee_msat = self.compute_fee(
@@ -353,6 +376,10 @@ class Logic:
         return expected_fee
 
     def generate_invoice(self):
+        """
+        Returns:
+            obj: decoded grpc invoice object with proper memo
+        """
         if self.last_hop_channel:
             memo = f"Rebalance of channel with ID {self.last_hop_channel.chan_id}"
         else:

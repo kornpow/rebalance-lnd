@@ -52,6 +52,12 @@ class Rebalance:
         return rebalance_amount, self.lnd.get_ppm_to(channel.chan_id)
 
     def get_scaled_min_local(self, channel):
+        """
+        Args:
+            channel (obj): Channel grpc object
+        Returns:
+            int: Amount of satoshis that can be received on this channel
+        """
         local_available = get_local_available(channel)
         remote_available = get_remote_available(channel)
         if local_available + remote_available >= self.min_local + self.min_remote:
@@ -59,6 +65,12 @@ class Rebalance:
         return self.min_local / (self.min_local + self.min_remote) * (local_available + remote_available)
 
     def get_scaled_min_remote(self, channel):
+        """
+        Args:
+            channel (obj): Channel grpc object
+        Returns:
+            int: Amount of satoshis that can be received on this channel
+        """
         local_available = get_local_available(channel)
         remote_available = get_remote_available(channel)
         if local_available + remote_available >= self.min_local + self.min_remote:
@@ -66,6 +78,12 @@ class Rebalance:
         return self.min_remote / (self.min_local + self.min_remote) * (local_available + remote_available)
 
     def get_rebalance_amount(self, channel):
+        """
+        Args:
+            channel (obj): Channel grpc object
+        Returns:
+            int: Amount of satoshis that can be received on this channel
+        """
         local_available = get_local_available(channel)
         remote_available = get_remote_available(channel)
         too_small = local_available + remote_available < self.min_local + self.min_remote
@@ -79,6 +97,10 @@ class Rebalance:
 
     def get_amount(self):
         amount = None
+        """
+        Returns:
+            int: Amount of satoshis that will be rebalanced
+        """
         if self.arguments.amount:
             if self.arguments.reckless and self.arguments.amount > MAX_SATOSHIS_PER_TRANSACTION:
                 self.output.print_line(format_error("Trying to send wumbo transaction"))
@@ -120,6 +142,7 @@ class Rebalance:
                 )
                 return 0
 
+        # Calculate amounts
         if self.first_hop_channel and self.last_hop_channel:
             computed_amount = max(min(can_receive, should_send), min(can_send, should_receive))
         elif self.first_hop_channel:
@@ -139,12 +162,30 @@ class Rebalance:
         return computed_amount
 
     def get_amount_can_send(self, channel):
+        """
+        Args:
+            channel (obj): Channel grpc object
+        Returns:
+            int: Amount of satoshis that can be received on this channel
+        """
         return get_local_available(channel) - self.get_scaled_min_local(channel)
 
     def get_amount_can_receive(self, channel):
+        """
+        Args:
+            channel (obj): Channel grpc object
+        Returns:
+            int: Amount of satoshis that can be received on this channel
+        """
         return get_remote_available(channel) - self.get_scaled_min_remote(channel)
 
     def get_channel_for_channel_id(self, channel_id):
+        """
+        Args:
+            channel_id (int): The channel id
+        Returns:
+            obj: Channel grpc object
+        """
         for channel in self.lnd.get_channels():
             if channel.chan_id == channel_id:
                 return channel
@@ -271,6 +312,12 @@ class Rebalance:
         ).rebalance()
 
     def get_first_hop_candidates(self):
+        """
+        Get channels which could potentially be a first hop in the rebalance
+
+        Returns:
+            list: List of grpc channel objects
+        """
         result = []
         for channel in self.lnd.get_channels(active_only=True):
             if self.get_rebalance_amount(channel) < 0:
@@ -278,6 +325,12 @@ class Rebalance:
         return result
 
     def get_last_hop_candidates(self):
+        """
+        Get channels which could potentially be a first hop in the rebalance
+
+        Returns:
+            list: List of grpc channel objects
+        """
         result = []
         for channel in self.lnd.get_channels(active_only=True):
             if self.get_rebalance_amount(channel) > 0:
@@ -503,14 +556,32 @@ def get_argument_parser():
 
 
 def get_local_available(channel):
+    """
+    Args:
+        channel (obj): Channel grpc object
+    Returns:
+        int: (local_balance - channel reserve) or 0
+    """
     return max(0, channel.local_balance - channel.local_chan_reserve_sat)
 
 
 def get_remote_available(channel):
+    """
+    Args:
+        channel (obj): Channel grpc object
+    Returns:
+        int: (remote_balance - channel reserve) or 0
+    """
     return max(0, channel.remote_balance - channel.remote_chan_reserve_sat)
 
 
 def get_local_ratio(channel):
+    """
+    Args:
+        channel (obj): Channel grpc object
+    Returns:
+        float: balanced ratio of the channel
+    """
     remote = channel.remote_balance
     local = channel.local_balance
     return float(local) / (remote + local)
