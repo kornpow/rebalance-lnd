@@ -140,6 +140,18 @@ class Logic:
         return fee_limit_msat
 
     def try_route(self, payment_request, route, routes, tried_routes):
+        """
+        Checks whether the given routes violates a set of contraints.
+        Updates the ignore list if route is invalid.
+
+        Args:
+            payment_request (obj): 
+            route (obj): Route grpc object
+            routes (obj): Internal router routes object
+            tried_routes (list): list of routes that were already tried
+        Returns:
+            bool: Whether or not a rebalance was successful on the route
+        """
         if self.route_is_invalid(route, routes):
             return False
 
@@ -154,6 +166,7 @@ class Logic:
         self.output.print_route(route)
 
         response = self.lnd.send_payment(payment_request, route)
+        # return True
         is_successful = response.failure.code == 0
         if is_successful:
             self.print_success_statistics(route, route_ppm)
@@ -233,6 +246,13 @@ class Logic:
 
     @staticmethod
     def get_failure_source_pubkey(response, route):
+        """
+        Args:
+            response (obj): send_to_route failure object
+            routes (obj): Route grpc object
+        Returns:
+            str: Pubkey of node which caused the failure      
+        """
         if response.failure.failure_source_index == 0:
             failure_source_pubkey = route.hops[-1].pub_key
         else:
@@ -242,6 +262,16 @@ class Logic:
         return failure_source_pubkey
 
     def route_is_invalid(self, route, routes):
+        """
+        Checks whether the given routes violates a set of contraints.
+        Updates the ignore list if route is invalid.
+
+        Args:
+            route (obj): Route grpc object
+            routes (obj): Internal router routes object
+        Returns:
+            bool: Whether or not the route viotes contraints
+        """
         first_hop = route.hops[0]
         last_hop = route.hops[-1]
         if self.low_outbound_liquidity_after_sending(first_hop, route.total_amt):

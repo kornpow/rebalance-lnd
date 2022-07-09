@@ -27,6 +27,12 @@ class Routes:
         self.output = output
 
     def has_next(self):
+        """
+        Check whether the router has
+
+        Returns:
+            None
+        """
         self.update_routes()
         return self.returned_routes < self.all_routes
 
@@ -39,6 +45,12 @@ class Routes:
         return None
 
     def update_routes(self):
+        """
+        Continually requests routes until one is found or we hit the max number of routes requested
+
+        Returns:
+            None
+        """       
         while True:
             if self.returned_routes < self.all_routes:
                 return
@@ -47,6 +59,13 @@ class Routes:
             self.request_route()
 
     def request_route(self):
+        """
+        Run the query_route command with all desired limits, ignored nodes, first/last hops.
+        If a route is found, it gets added to the internal calculated routes list: `all_routes`
+
+        Returns:
+            None
+        """
         amount = self.get_amount()
         if self.last_hop_channel:
             last_hop_pubkey = self.last_hop_channel.remote_pubkey
@@ -72,6 +91,14 @@ class Routes:
                 self.add_route(route)
 
     def add_route(self, route):
+        """
+        Add a route to the router objects internal list: `all_routes`
+
+        Args:
+            route (obj): Route grpc object
+        Returns:
+            None
+        """
         if route is None:
             return
         if route not in self.all_routes:
@@ -81,11 +108,27 @@ class Routes:
         return self.payment_request.num_satoshis
 
     def ignore_first_hop(self, channel, show_message=True):
+        """
+        TODO: 
+        Args:
+            channel (str): Channel grpc object
+            show_message (bool): Whether to print output to console
+        Returns:
+            None
+        """
         own_key = self.lnd.get_own_pubkey()
         other_key = channel.remote_pubkey
         self.ignore_edge_from_to(channel.chan_id, own_key, other_key, show_message)
 
     def ignore_edge_on_route(self, failure_source_pubkey, route):
+        """
+        TODO: 
+        Args:
+            failure_source_pubkey (str): Hop pubkey which caused the failure in the route
+            route (obj): Route grpc object
+        Returns:
+            None
+        """
         ignore_next = False
         for hop in route.hops:
             if ignore_next:
@@ -97,6 +140,14 @@ class Routes:
                 ignore_next = True
 
     def ignore_hop_on_route(self, hop_to_ignore, route):
+        """
+        TODO: 
+        Args:
+            hop_to_ignore (obj): Hop grpc object
+            route (obj): Route grpc object
+        Returns:
+            None
+        """
         previous_pubkey = self.lnd.get_own_pubkey()
         for hop in route.hops:
             if hop == hop_to_ignore:
@@ -105,9 +156,17 @@ class Routes:
             previous_pubkey = hop.pub_key
 
     def ignore_high_fee_hops(self, route):
+        """
+        TODO: 
+        Args:
+            route (int): Route grpc object
+        Returns:
+            None
+        """      
         ignore = []
         max_fee_msat = -1
         max_fee_hop = None
+        # Calculate the max fee in a route
         for hop in route.hops:
             if route.hops[-2].chan_id == hop.chan_id and self.last_hop_channel:
                 continue
@@ -137,6 +196,17 @@ class Routes:
         self.ignore_edge_from_to(chan_id, edge.node2_pub, edge.node1_pub)
 
     def ignore_edge_from_to(self, chan_id, from_pubkey, to_pubkey, show_message=True):
+        """
+        Updates the routes object class variables to contain a list of ignored pairs
+
+        Args:
+            chan_id (int): Channel id
+            from_pubkey (str): source public key
+            to_pubkey (str): dest public key
+            show_message (bool): whether or not to show a log message
+        Returns:
+            None
+        """
         pair = {
             "from": base64.b16decode(from_pubkey, True),
             "to": base64.b16decode(to_pubkey, True),
